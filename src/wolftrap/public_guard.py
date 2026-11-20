@@ -43,6 +43,8 @@ _APPROVED_PIP_PREFIXES = (
     ("python", "-m"), ("python3", "-m"), ("python", "-I", "-m"),
 )
 _APPROVED_LOCK_PATH = (".github", "qualification-requirements.txt")
+_BUILDER_LOCK_PATH = (".github", "product-builder.lock")
+_BUILDER_LOCK_LINE = "setuptools==84.2.1 --hash=sha256:ca140b45d5325a9478f880e351484f62fef15f336462e449ca0c03c873d589c2"
 _APPROVED_LOCK_LINE = (
     "PyYAML==6.0.3 --hash=sha256:ba1cc08a7ccde2d2ec775841541641e4548226580ab850948cbfda66a1befcdc"
 )
@@ -320,9 +322,9 @@ def _source_signals(
         signals.add("private-import")
     if parts == ("pyproject.toml",):
         signals.update(_project_dependency_signals(source))
-    if parts == _APPROVED_LOCK_PATH:
+    if parts in (_APPROVED_LOCK_PATH, _BUILDER_LOCK_PATH):
         requirements = [line for line in source.splitlines() if line.strip() and not line.lstrip().startswith("#")]
-        if requirements != [_APPROVED_LOCK_LINE]:
+        if requirements != [_APPROVED_LOCK_LINE if parts == _APPROVED_LOCK_PATH else _BUILDER_LOCK_LINE]:
             signals.add("unreviewed-dependency-manifest")
     if parts[:2] != ("tests", "fixtures") and (
         parts[-1].lower() in _DEPENDENCY_FILES

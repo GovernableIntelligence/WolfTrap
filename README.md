@@ -69,6 +69,10 @@ and optional gate allow-through paths. They do not prove authorization bypasses.
 
 ## Run an inspection or synthetic challenge
 
+The offline product candidate provides a hash-checked local wheel, `wolftrap doctor`,
+`wolftrap quickscan` and `wolftrap verify-report`. Start with the included two-file
+example, then select your own authorized project. [Installation, quick start and tested scope](docs/offline-product.md).
+
 ### Option A: Scan your repository locally
 
 Requires Python 3.11+ and a local authorized checkout:

@@ -9,6 +9,10 @@ deployment credentials, or guarantee that a repository is secure.
 
 ## Choose your path
 
+For a free local wheel with no required runtime dependency, use the offline
+candidate guide. It includes a fictional first scan, coverage explanations,
+tamper detection and uninstall instructions. [Offline product quick start](offline-product.md).
+
 ### 1. Local command line (public beta)
 
 Requirements: Python 3.11+, Git, a checked-out repository you are authorized

@@ -535,6 +535,8 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
+    from .product_cli import configure
+    configure(parser, subparsers)
 
     run = subparsers.add_parser("run", help="run a bounded synthetic campaign")
     run.add_argument("--seed", type=int, default=20261113)

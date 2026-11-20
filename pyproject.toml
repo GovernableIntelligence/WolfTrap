@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "wolftrap"
-version = "0.5.3"
+version = "0.5.4.dev1"
 description = "Offline CI/build, agent protected-effect, and prompt-document inspection with synthetic challenge labs"
 readme = "README.md"
 license = "Apache-2.0"
@@ -24,4 +24,4 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.setuptools.package-data]
-wolftrap = ["scenarios/v1/*.json", "schemas/*.json", "data/*.json"]
+wolftrap = ["scenarios/v1/*.json", "schemas/*.json", "data/*.json", "data/product-demo/*.md", "data/product-demo/*.js"]
