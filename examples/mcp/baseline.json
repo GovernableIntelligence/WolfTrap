@@ -1,0 +1,22 @@
+{
+  "schema": "wolftrap.mcp-tools-snapshot/v1",
+  "protocolVersion": "2025-11-25",
+  "provenance": {"stream": "fictional-catalog-lab", "sequence": 1},
+  "servers": [{
+    "id": "fictional-catalog",
+    "serverInfo": {"name": "catalog", "version": "1.0"},
+    "result": {
+      "tools": [{
+        "name": "catalog_lookup",
+        "description": "Look up a catalog entry.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {"query": {"type": "string"}},
+          "required": ["query"],
+          "additionalProperties": false
+        },
+        "annotations": {"readOnlyHint": true, "destructiveHint": false}
+      }]
+    }
+  }]
+}

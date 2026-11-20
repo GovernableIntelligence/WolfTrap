@@ -19,6 +19,10 @@ contacting external systems. WolfTrap identifies *conditional review signals*,
 explains the contributing conditions, and produces portable JSON, Markdown,
 SARIF and integrity manifests. No inspected project code is executed.
 
+**MCP Bloodhound** compares offline MCP tool inventories with an operator-selected
+baseline. It inspects declared behavior, authorization claims, schema changes
+and ambiguous tool names across servers. [MCP snapshot format and replay](docs/mcp-bloodhound.md).
+
 An additional **experimental cloud-C2 synthetic challenge** models two bounded
 behavioral correlations inspired by publicly documented GitDoor activity. It
 does not scan live GitHub repositories, diagnose infections, or interact with
@@ -330,6 +334,23 @@ an independently captured in-memory effect sink must agree; a denial stops
 the remaining chain. **No ARTEX process, network request, exploit, live agent,
 real sandbox or Ground Truth/HERCULES runtime runs.** See
 [scenarios, reproduction and limitations](docs/artex-chain-challenge.md).
+
+### Inspect saved MCP tool inventories
+
+The example compares two synthetic captures. Both inspection and successful
+inspection replay return exit 1 for this review-required change.
+
+```bash
+wolftrap scan-mcp --baseline examples/mcp/baseline.json \
+  --candidate examples/mcp/candidate.json --output-dir /tmp/wolftrap-mcp-review
+wolftrap verify-mcp --baseline examples/mcp/baseline.json \
+  --candidate examples/mcp/candidate.json --evidence-dir /tmp/wolftrap-mcp-review
+wolftrap challenge-mcp --output-dir /tmp/wolftrap-mcp-challenge
+wolftrap verify-mcp-challenge --evidence-dir /tmp/wolftrap-mcp-challenge
+```
+
+The challenge scores 178 authored snapshot/configuration cases and exercises
+12 filesystem and evidence controls. See [rules, bounds, baseline pins and known misses](docs/mcp-bloodhound.md).
 
 ### Additional offline evaluation suites
 
