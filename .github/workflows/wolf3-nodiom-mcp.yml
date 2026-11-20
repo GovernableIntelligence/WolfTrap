@@ -1,0 +1,148 @@
+name: Wolf3 Nodiom pinned local MCP qualification
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/wolf3-nodiom-mcp.yml'
+      - 'research/nodiom-wolf3-*.mjs'
+      - 'docs/nodiom-wolf3-qualification.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pinned-local-qualification:
+    name: Pinned upstream (synthetic files, runtime network disabled)
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      CORE_SHA: 335de4d79ed9b64e8f679fe13a088c7c503525f0
+      MCP_SHA: 469aa971ea0d836d4428f977bd05790168a1fc5f
+      WOLFTRAP_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Checkout WolfTrap without persisting a token
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ env.WOLFTRAP_HEAD }}
+          persist-credentials: false
+
+      - name: Fetch pinned public source and install dependencies without lifecycle scripts
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test "$(git rev-parse HEAD)" = "$WOLFTRAP_HEAD"
+          root="$RUNNER_TEMP/wolf3-nodiom-$GITHUB_RUN_ID"
+          mkdir -p "$root/cache" "$root/blank-home" "$root/evidence"
+          echo "WOLF3_ROOT=$root" >> "$GITHUB_ENV"
+          for repo in core mcp; do
+            case "$repo" in
+              core) remote=nodiom; sha="$CORE_SHA" ;;
+              mcp) remote=nodiom-mcp; sha="$MCP_SHA" ;;
+            esac
+            git -c credential.helper= init -q "$root/$repo"
+            git -C "$root/$repo" remote add origin "https://github.com/Synexiom-Labs/$remote.git"
+            git -c credential.helper= -C "$root/$repo" fetch --depth=1 --no-tags origin "$sha"
+            git -C "$root/$repo" checkout --detach -q FETCH_HEAD
+          done
+          test "$(git -C "$root/core" rev-parse HEAD)" = "$CORE_SHA"
+          test "$(git -C "$root/mcp" rev-parse HEAD)" = "$MCP_SHA"
+          {
+            printf 'Upstream core commit: %s\n' "$CORE_SHA"
+            printf 'Upstream MCP commit: %s\n' "$MCP_SHA"
+            printf 'WolfTrap qualification head: %s\n' "$WOLFTRAP_HEAD"
+            printf 'GitHub workflow event commit: %s\n' "$GITHUB_SHA"
+          } > "$root/evidence/source-pins.txt"
+          for repo in core mcp; do
+            (cd "$root/$repo" && env -i HOME="$root/blank-home" PATH="$PATH" \
+              npm_config_cache="$root/cache" npm_config_audit=false npm_config_fund=false \
+              npm ci --ignore-scripts --no-audit --no-fund)
+          done
+          # Override the floating npm semver dependency with the verified local core.
+          rm -rf -- "$root/mcp/node_modules/@synexiom-labs/nodiom"
+          ln -s ../../../core "$root/mcp/node_modules/@synexiom-labs/nodiom"
+
+      - name: Pull disposable Node runtime and record image identity
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker pull node:22-bookworm-slim
+          docker image inspect node:22-bookworm-slim --format '{{.Id}}' > "$WOLF3_ROOT/evidence/node-image-id.txt"
+
+      - name: Build and test actual pinned source without a network
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          for spec in 'core|npm run typecheck' 'core|npm test' 'core|npm run build' 'mcp|npm run build'; do
+            project="$(printf '%s' "$spec" | cut -d '|' -f 1)"
+            task="$(printf '%s' "$spec" | cut -d '|' -f 2-)"
+            docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges \
+              --read-only --tmpfs /tmp:rw,nosuid,size=256m \
+              --user "$(id -u):$(id -g)" -e HOME=/tmp \
+              -v "$WOLF3_ROOT:/work:rw" -w "/work/$project" node:22-bookworm-slim sh -c "$task"
+          done
+
+      - name: Check genuine core stale-snapshot and advisory-lock controls
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges \
+            --read-only --tmpfs /tmp:rw,nosuid,size=256m \
+            --user "$(id -u):$(id -g)" -e HOME=/tmp \
+            -v "$WOLF3_ROOT:/work:rw" -v "$PWD/research:/wolftrap:ro" \
+            node:22-bookworm-slim node /wolftrap/nodiom-wolf3-core.mjs /work/core /work/evidence
+
+      - name: Exercise genuine MCP stdio with eight concurrent clients
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges \
+            --read-only --tmpfs /tmp:rw,nosuid,size=256m \
+            --user "$(id -u):$(id -g)" -e HOME=/tmp \
+            -v "$WOLF3_ROOT:/work:rw" -v "$PWD/research:/wolftrap:ro" \
+            node:22-bookworm-slim node /wolftrap/nodiom-wolf3-mcp.mjs /work/mcp /work/evidence
+
+      - name: Apply test-only lock fix to cloned MCP source and qualify retention
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges \
+            --read-only --tmpfs /tmp:rw,nosuid,size=256m \
+            --user "$(id -u):$(id -g)" -e HOME=/tmp \
+            -v "$WOLF3_ROOT:/work:rw" -v "$PWD/research:/wolftrap:ro" \
+            node:22-bookworm-slim node /wolftrap/nodiom-wolf4-lockfix.mjs \
+            patch /work/mcp/src/index.ts /work/evidence/lockfix-patch.json
+          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges \
+            --read-only --tmpfs /tmp:rw,nosuid,size=256m \
+            --user "$(id -u):$(id -g)" -e HOME=/tmp \
+            -v "$WOLF3_ROOT:/work:rw" -w /work/mcp node:22-bookworm-slim npm run build
+          mkdir -p "$WOLF3_ROOT/evidence/lockfix"
+          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges \
+            --read-only --tmpfs /tmp:rw,nosuid,size=256m \
+            --user "$(id -u):$(id -g)" -e HOME=/tmp \
+            -v "$WOLF3_ROOT:/work:rw" -v "$PWD/research:/wolftrap:ro" \
+            node:22-bookworm-slim node /wolftrap/nodiom-wolf3-mcp.mjs \
+            /work/mcp /work/evidence/lockfix
+          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges \
+            --read-only --tmpfs /tmp:rw,nosuid,size=256m \
+            --user "$(id -u):$(id -g)" -e HOME=/tmp \
+            -v "$WOLF3_ROOT:/work:rw" -v "$PWD/research:/wolftrap:ro" \
+            node:22-bookworm-slim node /wolftrap/nodiom-wolf4-lockfix.mjs \
+            verify /work/evidence/lockfix/mcp-runtime.json /work/evidence/lockfix-verdict.json
+
+      - name: Hash all available evidence files
+        if: always()
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          if [ -n "$WOLF3_ROOT" ] && [ -d "$WOLF3_ROOT/evidence" ]; then
+            (cd "$WOLF3_ROOT/evidence" && find . -type f ! -name sha256sums.txt -print0 \
+              | sort -z | xargs -0 -r sha256sum > sha256sums.txt)
+          fi
+
+      - name: Upload synthetic qualification evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: wolf3-nodiom-pinned-local-evidence
+          path: ${{ env.WOLF3_ROOT }}/evidence/
+          if-no-files-found: warn
+          retention-days: 14
