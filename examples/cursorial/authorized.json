@@ -1,0 +1,25 @@
+{
+  "schema": "wolftrap.cursorial-chain/v1",
+  "mode": "behavior",
+  "sources": {
+    "catalog": {"alias": "fixture-catalog-1", "events": [
+      {"id": 2,"at": 4,"kind": "tool_definition_observed","chain": 2,"server": 8,"tool": 8,"schema_rev": 1,"indicator": "none"},
+      {"id": 5,"at": 10,"kind": "tool_definition_observed","chain": 2,"server": 1,"tool": 1,"schema_rev": 1,"indicator": "none"}
+    ]},
+    "agent": {"alias": "fixture-agent-1", "events": [
+      {"id": 6,"at": 12,"kind": "agent_proposal","chain": 2,"definition": 5,"grant": 1,"slot": 1,"operation": {"server": 1,"tool": 1,"schema_rev": 1,"verb": "label","resource": 2,"value": 1},"claim": "none"}
+    ]},
+    "host": {"alias": "fixture-host-1", "events": [
+      {"id": 1,"at": 2,"kind": "chain_opened","chain": 2,"tenant": 2,"owner": 1,"epoch": 1,"registry": "complete"},
+      {"id": 3,"at": 6,"kind": "delegation_observed","chain": 2,"parent": 0,"issuer": 1,"delegate": 2,"tenant": 2,"epoch": 1,"expires": 190},
+      {"id": 4,"at": 8,"kind": "grant_state","chain": 2,"grant": 1,"grant_chain": 2,"tenant": 2,"grantee": 2,"digest": "db9c7c1e2e2e87e6a77dac08f02a3b27a9d9d223f5067f2a488c98963027496d","slot": 1,"epoch": 1,"since": 0,"expires": 190,"state": "active"},
+      {"id": 7,"at": 14,"kind": "request_bound","chain": 2,"proposal": 6,"tenant": 2,"actor": 2,"delegation": 3,"digest": "db9c7c1e2e2e87e6a77dac08f02a3b27a9d9d223f5067f2a488c98963027496d"},
+      {"id": 8,"at": 16,"kind": "gate_decision","chain": 2,"binding": 7,"phase": "prepare","decision": "allow","digest": "db9c7c1e2e2e87e6a77dac08f02a3b27a9d9d223f5067f2a488c98963027496d"},
+      {"id": 9,"at": 18,"kind": "gate_decision","chain": 2,"binding": 7,"phase": "commit","decision": "allow","digest": "db9c7c1e2e2e87e6a77dac08f02a3b27a9d9d223f5067f2a488c98963027496d"},
+      {"id": 11,"at": 22,"kind": "recovery_checkpoint","chain": 2,"phase": "closed","binding": 0,"attempts": 1}
+    ]},
+    "ledger": {"alias": "fixture-ledger-1", "events": [
+      {"id": 10,"at": 20,"kind": "effect_observed","chain": 2,"commit": 9,"before_count": 0,"after_count": 1,"before_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945","after_hash": "e64326b6a83cb2acd0a9eb8a13523e228092375a03c334170a58981efe1a18bd","records": [{"at": 18,"chain": 2,"tenant": 2,"actor": 2,"binding": 7,"slot": 1,"grant": 1,"operation": {"server": 1,"tool": 1,"schema_rev": 1,"verb": "label","resource": 2,"value": 1}}]}
+    ]}
+  }
+}

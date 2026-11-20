@@ -313,6 +313,12 @@ def _challenge_artex_chain(arguments: argparse.Namespace) -> int:
     return code
 
 
+def _cursorial(arguments: argparse.Namespace) -> int:
+    from .cursorial_evidence import command
+
+    return command(arguments)
+
+
 def _verify_artex_chain(arguments: argparse.Namespace) -> int:
     from .artex_chain import verify_evidence
 
@@ -661,6 +667,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     artex_verify.add_argument("--evidence-dir", required=True)
     artex_verify.set_defaults(handler=_verify_artex_chain)
+
+    for name, help_text in (
+        ("challenge-cursorial", "qualify synthetic causal chains or inspect a selected fictional capture"),
+        ("verify-cursorial", "replay and verify a complete Cursorial evidence bundle"),
+    ):
+        cursorial = subparsers.add_parser(name, help=help_text)
+        cursorial.add_argument("--chain", help="explicit local fictional chain JSON, also required for its replay")
+        cursorial.add_argument("--expected-head", help="independently supplied exact WolfTrap Git commit")
+        if name == "verify-cursorial":
+            cursorial.add_argument("--evidence-dir", required=True)
+        else:
+            cursorial.add_argument("--output-dir", required=True, help="fresh local evidence directory")
+        cursorial.set_defaults(handler=_cursorial)
 
     camouflage = subparsers.add_parser(
         "challenge-cloud-camouflage", help="measure offline cloud-C2 blind spots and lookalikes")

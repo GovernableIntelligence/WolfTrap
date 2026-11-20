@@ -1,0 +1,56 @@
+name: WolfTrap Cursorial Intelligence Engine qualification
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    name: Replay Cursorial host and effect witnesses
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      WOLFTRAP_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Check out the exact candidate
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ env.WOLFTRAP_HEAD }}
+          persist-credentials: false
+
+      - name: Screen source and qualify in a loopback-only namespace
+        shell: bash
+        run: |
+          set -euo pipefail
+          parent_namespace=$(readlink /proc/self/ns/net)
+          sudo unshare --net -- setpriv --reuid="$(id -u)" --regid="$(id -g)" \
+            --clear-groups --no-new-privs --bounding-set=-all -- env -i \
+            PATH=/usr/bin:/bin PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 PYTHONHASHSEED=0 \
+            python3 scripts/qualify-cursorial.py --expected-head "$WOLFTRAP_HEAD" \
+            --parent-netns "$parent_namespace" --output-dir "$RUNNER_TEMP/wolftrap-cursorial"
+
+      - name: Retain only screened fictional evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: wolftrap-cursorial-v1
+          path: |
+            ${{ runner.temp }}/wolftrap-cursorial/qualification.json
+            ${{ runner.temp }}/wolftrap-cursorial/unit-tests.json
+            ${{ runner.temp }}/wolftrap-cursorial/challenge/cursorial.json
+            ${{ runner.temp }}/wolftrap-cursorial/challenge/cursorial-chains.json
+            ${{ runner.temp }}/wolftrap-cursorial/challenge/cursorial.md
+            ${{ runner.temp }}/wolftrap-cursorial/challenge/cursorial.sarif
+            ${{ runner.temp }}/wolftrap-cursorial/challenge/cursorial.manifest.json
+            ${{ runner.temp }}/wolftrap-cursorial/selected/cursorial.json
+            ${{ runner.temp }}/wolftrap-cursorial/selected/cursorial-chains.json
+            ${{ runner.temp }}/wolftrap-cursorial/selected/cursorial.md
+            ${{ runner.temp }}/wolftrap-cursorial/selected/cursorial.sarif
+            ${{ runner.temp }}/wolftrap-cursorial/selected/cursorial.manifest.json
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:wolftrap:cursorial-graph:v1",
+  "title": "Cursorial causal graph",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema","nodes","edges"],
+  "properties": {
+    "schema": {"const": "wolftrap.cursorial-graph/v1"},
+    "nodes": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 48,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id","at","chain","kind","source"],
+        "properties": {
+          "id": {"$ref": "#/$defs/id"},
+          "at": {"$ref": "#/$defs/time"},
+          "chain": {"$ref": "#/$defs/alias"},
+          "kind": {
+            "enum": ["tool_definition_observed","agent_proposal","chain_opened","delegation_observed","grant_state","epoch_observed","request_bound","gate_decision","recovery_checkpoint","effect_observed"]
+          },
+          "source": {
+            "enum": ["fixture-catalog-1","fixture-agent-1","fixture-host-1","fixture-ledger-1"]
+          }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 384,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["from","to","relation"],
+        "properties": {
+          "from": {"$ref": "#/$defs/id"},
+          "to": {"$ref": "#/$defs/id"},
+          "relation": {
+            "enum": ["chain","definition","proposal","delegation","grant","epoch","binding","prepare","previous-slot","commit","ledger-prefix","recovery","completion"]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 256
+    },
+    "time": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4095
+    },
+    "alias": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 8
+    }
+  }
+}
