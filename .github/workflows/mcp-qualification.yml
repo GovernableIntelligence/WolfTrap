@@ -1,0 +1,58 @@
+name: WolfTrap MCP Bloodhound qualification
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    name: Qualify and replay offline MCP evidence
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      WOLFTRAP_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Check out the exact candidate
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ env.WOLFTRAP_HEAD }}
+          persist-credentials: false
+
+      - name: Run source screening, unit tests, qualification and replay with loopback only
+        shell: bash
+        run: |
+          set -euo pipefail
+          parent_namespace=$(readlink /proc/self/ns/net)
+          sudo unshare --net -- setpriv --reuid="$(id -u)" --regid="$(id -g)" \
+            --clear-groups --no-new-privs --bounding-set=-all -- env -i \
+            PATH=/usr/bin:/bin PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 PYTHONHASHSEED=0 \
+            python3 scripts/qualify-mcp.py --expected-head "$WOLFTRAP_HEAD" \
+            --parent-netns "$parent_namespace" --output-dir "$RUNNER_TEMP/wolftrap-mcp"
+
+      - name: Retain screened synthetic evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: wolftrap-mcp-bloodhound-v1
+          path: |
+            ${{ runner.temp }}/wolftrap-mcp/qualification.json
+            ${{ runner.temp }}/wolftrap-mcp/unit-tests.json
+            ${{ runner.temp }}/wolftrap-mcp/review/mcp-scan.json
+            ${{ runner.temp }}/wolftrap-mcp/review/mcp-scan.md
+            ${{ runner.temp }}/wolftrap-mcp/review/mcp-scan.sarif
+            ${{ runner.temp }}/wolftrap-mcp/review/mcp-scan.manifest.json
+            ${{ runner.temp }}/wolftrap-mcp/negative/mcp-scan.json
+            ${{ runner.temp }}/wolftrap-mcp/negative/mcp-scan.md
+            ${{ runner.temp }}/wolftrap-mcp/negative/mcp-scan.sarif
+            ${{ runner.temp }}/wolftrap-mcp/negative/mcp-scan.manifest.json
+            ${{ runner.temp }}/wolftrap-mcp/challenge/mcp-challenge.json
+            ${{ runner.temp }}/wolftrap-mcp/challenge/mcp-challenge.md
+            ${{ runner.temp }}/wolftrap-mcp/challenge/mcp-challenge.sarif
+            ${{ runner.temp }}/wolftrap-mcp/challenge/mcp-challenge.manifest.json
+          if-no-files-found: error
+          retention-days: 14

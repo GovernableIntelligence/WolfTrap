@@ -313,6 +313,12 @@ def _challenge_artex_chain(arguments: argparse.Namespace) -> int:
     return code
 
 
+def _cursorial(arguments: argparse.Namespace) -> int:
+    from .cursorial_evidence import command
+
+    return command(arguments)
+
+
 def _verify_artex_chain(arguments: argparse.Namespace) -> int:
     from .artex_chain import verify_evidence
 
@@ -526,6 +532,12 @@ def _reproduce(arguments: argparse.Namespace) -> int:
     return 1 if reproduced else 2
 
 
+def _mcp(arguments: argparse.Namespace) -> int:
+    from .mcp_evidence import command
+
+    return command(arguments)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="wolftrap",
@@ -535,6 +547,24 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    for name, help_text in (
+        ("scan-mcp", "inspect two offline MCP tools/list snapshots"),
+        ("verify-mcp", "replay MCP inspection against the explicit source files"),
+        ("challenge-mcp", "qualify MCP rules against independently labelled synthetic controls"),
+        ("verify-mcp-challenge", "replay the synthetic MCP qualification and verify all evidence"),
+    ):
+        mcp = subparsers.add_parser(name, help=help_text)
+        if name in ("scan-mcp", "verify-mcp"):
+            mcp.add_argument("--baseline", required=True, help="operator-selected baseline snapshot")
+            mcp.add_argument("--candidate", required=True, help="candidate snapshot from the same capture stream")
+            mcp.add_argument("--baseline-sha256", help="expected baseline digest from an independent record")
+            mcp.add_argument("--config", help="optional local stdio client JSON configuration")
+        if name.startswith("verify"):
+            mcp.add_argument("--evidence-dir", required=True)
+        else:
+            mcp.add_argument("--output-dir", required=True, help="fresh evidence directory outside input directories")
+        mcp.set_defaults(handler=_mcp)
 
     run = subparsers.add_parser("run", help="run a bounded synthetic campaign")
     run.add_argument("--seed", type=int, default=20261113)
@@ -661,6 +691,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     artex_verify.add_argument("--evidence-dir", required=True)
     artex_verify.set_defaults(handler=_verify_artex_chain)
+
+    for name, help_text in (
+        ("challenge-cursorial", "qualify synthetic causal chains or inspect a selected fictional capture"),
+        ("verify-cursorial", "replay and verify a complete Cursorial evidence bundle"),
+    ):
+        cursorial = subparsers.add_parser(name, help=help_text)
+        cursorial.add_argument("--chain", help="explicit local fictional chain JSON, also required for its replay")
+        cursorial.add_argument("--expected-head", help="independently supplied exact WolfTrap Git commit")
+        if name == "verify-cursorial":
+            cursorial.add_argument("--evidence-dir", required=True)
+        else:
+            cursorial.add_argument("--output-dir", required=True, help="fresh local evidence directory")
+        cursorial.set_defaults(handler=_cursorial)
 
     camouflage = subparsers.add_parser(
         "challenge-cloud-camouflage", help="measure offline cloud-C2 blind spots and lookalikes")

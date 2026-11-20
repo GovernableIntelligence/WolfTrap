@@ -1,0 +1,339 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:wolftrap:cursorial-chain:v1",
+  "title": "Fictional Cursorial chain",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema","mode","sources"],
+  "properties": {
+    "schema": {"const": "wolftrap.cursorial-chain/v1"},
+    "mode": {
+      "enum": ["behavior","metadata"]
+    },
+    "sources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["catalog","agent","host","ledger"],
+      "properties": {
+        "catalog": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["alias","events"],
+          "properties": {
+            "alias": {"const": "fixture-catalog-1"},
+            "events": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 48,
+              "items": {
+                "oneOf": [
+                  {"$ref": "#/$defs/tool_definition_observed"}
+                ]
+              }
+            }
+          }
+        },
+        "agent": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["alias","events"],
+          "properties": {
+            "alias": {"const": "fixture-agent-1"},
+            "events": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 48,
+              "items": {
+                "oneOf": [
+                  {"$ref": "#/$defs/agent_proposal"}
+                ]
+              }
+            }
+          }
+        },
+        "host": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["alias","events"],
+          "properties": {
+            "alias": {"const": "fixture-host-1"},
+            "events": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 48,
+              "items": {
+                "oneOf": [
+                  {"$ref": "#/$defs/chain_opened"},
+                  {"$ref": "#/$defs/delegation_observed"},
+                  {"$ref": "#/$defs/grant_state"},
+                  {"$ref": "#/$defs/epoch_observed"},
+                  {"$ref": "#/$defs/request_bound"},
+                  {"$ref": "#/$defs/gate_decision"},
+                  {"$ref": "#/$defs/recovery_checkpoint"}
+                ]
+              }
+            }
+          }
+        },
+        "ledger": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["alias","events"],
+          "properties": {
+            "alias": {"const": "fixture-ledger-1"},
+            "events": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 48,
+              "items": {
+                "oneOf": [
+                  {"$ref": "#/$defs/effect_observed"}
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "alias": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 8
+    },
+    "id": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 256
+    },
+    "ref": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 256
+    },
+    "time": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4095
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 64
+    },
+    "digest": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["server","tool","schema_rev","verb","resource","value"],
+      "properties": {
+        "server": {"$ref": "#/$defs/alias"},
+        "tool": {"$ref": "#/$defs/alias"},
+        "schema_rev": {"$ref": "#/$defs/alias"},
+        "verb": {
+          "enum": ["append","label","archive"]
+        },
+        "resource": {"$ref": "#/$defs/alias"},
+        "value": {"$ref": "#/$defs/alias"}
+      }
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["at","chain","tenant","actor","binding","slot","grant","operation"],
+      "properties": {
+        "at": {"$ref": "#/$defs/time"},
+        "chain": {"$ref": "#/$defs/alias"},
+        "tenant": {"$ref": "#/$defs/alias"},
+        "actor": {"$ref": "#/$defs/alias"},
+        "binding": {"$ref": "#/$defs/id"},
+        "slot": {"$ref": "#/$defs/alias"},
+        "grant": {"$ref": "#/$defs/alias"},
+        "operation": {"$ref": "#/$defs/operation"}
+      }
+    },
+    "tool_definition_observed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind","id","at","chain","server","tool","schema_rev","indicator"],
+      "properties": {
+        "kind": {"const": "tool_definition_observed"},
+        "id": {"$ref": "#/$defs/id"},
+        "at": {"$ref": "#/$defs/time"},
+        "chain": {"$ref": "#/$defs/alias"},
+        "server": {"$ref": "#/$defs/alias"},
+        "tool": {"$ref": "#/$defs/alias"},
+        "schema_rev": {"$ref": "#/$defs/alias"},
+        "indicator": {
+          "enum": ["none","override","approval","shadow"]
+        }
+      }
+    },
+    "agent_proposal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind","id","at","chain","definition","grant","slot","operation","claim"],
+      "properties": {
+        "kind": {"const": "agent_proposal"},
+        "id": {"$ref": "#/$defs/id"},
+        "at": {"$ref": "#/$defs/time"},
+        "chain": {"$ref": "#/$defs/alias"},
+        "definition": {"$ref": "#/$defs/id"},
+        "grant": {"$ref": "#/$defs/alias"},
+        "slot": {"$ref": "#/$defs/alias"},
+        "operation": {"$ref": "#/$defs/operation"},
+        "claim": {
+          "enum": ["none","approved","success"]
+        }
+      }
+    },
+    "chain_opened": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind","id","at","chain","tenant","owner","epoch","registry"],
+      "properties": {
+        "kind": {"const": "chain_opened"},
+        "id": {"$ref": "#/$defs/id"},
+        "at": {"$ref": "#/$defs/time"},
+        "chain": {"$ref": "#/$defs/alias"},
+        "tenant": {"$ref": "#/$defs/alias"},
+        "owner": {"$ref": "#/$defs/alias"},
+        "epoch": {"$ref": "#/$defs/alias"},
+        "registry": {
+          "enum": ["complete","partial"]
+        }
+      }
+    },
+    "delegation_observed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind","id","at","chain","parent","issuer","delegate","tenant","epoch","expires"],
+      "properties": {
+        "kind": {"const": "delegation_observed"},
+        "id": {"$ref": "#/$defs/id"},
+        "at": {"$ref": "#/$defs/time"},
+        "chain": {"$ref": "#/$defs/alias"},
+        "parent": {"$ref": "#/$defs/ref"},
+        "issuer": {"$ref": "#/$defs/alias"},
+        "delegate": {"$ref": "#/$defs/alias"},
+        "tenant": {"$ref": "#/$defs/alias"},
+        "epoch": {"$ref": "#/$defs/alias"},
+        "expires": {"$ref": "#/$defs/time"}
+      }
+    },
+    "grant_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind","id","at","chain","grant","grant_chain","tenant","grantee","digest","slot","epoch","since","expires","state"],
+      "properties": {
+        "kind": {"const": "grant_state"},
+        "id": {"$ref": "#/$defs/id"},
+        "at": {"$ref": "#/$defs/time"},
+        "chain": {"$ref": "#/$defs/alias"},
+        "grant": {"$ref": "#/$defs/alias"},
+        "grant_chain": {"$ref": "#/$defs/alias"},
+        "tenant": {"$ref": "#/$defs/alias"},
+        "grantee": {"$ref": "#/$defs/alias"},
+        "digest": {"$ref": "#/$defs/digest"},
+        "slot": {"$ref": "#/$defs/alias"},
+        "epoch": {"$ref": "#/$defs/alias"},
+        "since": {"$ref": "#/$defs/time"},
+        "expires": {"$ref": "#/$defs/time"},
+        "state": {
+          "enum": ["active","revoked","denied"]
+        }
+      }
+    },
+    "epoch_observed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind","id","at","chain","epoch"],
+      "properties": {
+        "kind": {"const": "epoch_observed"},
+        "id": {"$ref": "#/$defs/id"},
+        "at": {"$ref": "#/$defs/time"},
+        "chain": {"$ref": "#/$defs/alias"},
+        "epoch": {"$ref": "#/$defs/alias"}
+      }
+    },
+    "request_bound": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind","id","at","chain","proposal","tenant","actor","delegation","digest"],
+      "properties": {
+        "kind": {"const": "request_bound"},
+        "id": {"$ref": "#/$defs/id"},
+        "at": {"$ref": "#/$defs/time"},
+        "chain": {"$ref": "#/$defs/alias"},
+        "proposal": {"$ref": "#/$defs/id"},
+        "tenant": {"$ref": "#/$defs/alias"},
+        "actor": {"$ref": "#/$defs/alias"},
+        "delegation": {"$ref": "#/$defs/ref"},
+        "digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "gate_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind","id","at","chain","binding","phase","decision","digest"],
+      "properties": {
+        "kind": {"const": "gate_decision"},
+        "id": {"$ref": "#/$defs/id"},
+        "at": {"$ref": "#/$defs/time"},
+        "chain": {"$ref": "#/$defs/alias"},
+        "binding": {"$ref": "#/$defs/id"},
+        "phase": {
+          "enum": ["prepare","commit"]
+        },
+        "decision": {
+          "enum": ["allow","deny"]
+        },
+        "digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "recovery_checkpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind","id","at","chain","phase","binding","attempts"],
+      "properties": {
+        "kind": {"const": "recovery_checkpoint"},
+        "id": {"$ref": "#/$defs/id"},
+        "at": {"$ref": "#/$defs/time"},
+        "chain": {"$ref": "#/$defs/alias"},
+        "phase": {
+          "enum": ["lost_reply","resumed","closed"]
+        },
+        "binding": {"$ref": "#/$defs/ref"},
+        "attempts": {"$ref": "#/$defs/count"}
+      }
+    },
+    "effect_observed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind","id","at","chain","commit","before_count","after_count","before_hash","after_hash","records"],
+      "properties": {
+        "kind": {"const": "effect_observed"},
+        "id": {"$ref": "#/$defs/id"},
+        "at": {"$ref": "#/$defs/time"},
+        "chain": {"$ref": "#/$defs/alias"},
+        "commit": {"$ref": "#/$defs/id"},
+        "before_count": {"$ref": "#/$defs/count"},
+        "after_count": {"$ref": "#/$defs/count"},
+        "before_hash": {"$ref": "#/$defs/digest"},
+        "after_hash": {"$ref": "#/$defs/digest"},
+        "records": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 4,
+          "items": {"$ref": "#/$defs/receipt"}
+        }
+      }
+    }
+  }
+}
